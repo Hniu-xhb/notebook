@@ -9,9 +9,18 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
 
 public class NoteDAO {
+    private static final ExecutorService exe = Executors.newFixedThreadPool(3,r->{
+        Thread thread = new Thread(r);
+        thread.setDaemon(true);
+        return thread;
+    });
+
+
     public boolean addNote(Note note) throws IOException {
         if(note.getId()!=-1){
             FileUtils.writeFile(note,note.getId());
@@ -38,13 +47,12 @@ public class NoteDAO {
     }
 
     public static int input(File get) throws IOException, ExecutionException, InterruptedException {
-        FutureTask<Integer> ft = new FutureTask<>(new Input(get));
-        new Thread(ft).start();
-        return ft.get();
+        return exe.submit(new Input(get)).get();
+
     }
 
     public static void output(File get) throws IOException {
-        new Thread(new Output(get)).start();
+        exe.submit(new Output(get));
     }
 
 }

@@ -16,12 +16,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 public class HomeJF extends JFrame {
     /**
      * 控制器
      */
     NoteAction action = new NoteAction();
+    //线程池
+
 
     private JPanel home = null;//笔记界面
     private JTextField search = null;//搜索框
