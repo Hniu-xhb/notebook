@@ -6,12 +6,16 @@ import cn.hniu.entity.Note;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 public class HomeJF extends JFrame {
     /**
@@ -49,7 +53,9 @@ public class HomeJF extends JFrame {
             g2.dispose();
         }
     };
-
+    //导出导入按钮
+    JButton outputBtn = new JButton("导出");
+    JButton inputBtn = new JButton("导入");
 
 
 
@@ -68,7 +74,7 @@ public class HomeJF extends JFrame {
 
         setVisible(true);
     }
-
+    //初始化详细界面
     private void initDetail(Note note) {
 
         detail.removeAll();
@@ -172,7 +178,7 @@ public class HomeJF extends JFrame {
         detail.revalidate();
         detail.repaint();
     }
-
+    //初始化添加按钮
     private void initAdd() {
         addBtn.setBounds(620, 1000, 78, 78);
         addBtn.setFont(new Font("宋体", Font.BOLD, 80));
@@ -183,7 +189,7 @@ public class HomeJF extends JFrame {
         addBtn.addActionListener(e->addClick());
         Home.add(addBtn,JLayeredPane.PALETTE_LAYER);
     }
-
+    //初始化主界面
     private void iniHome() {
         home = new JPanel();
         home.setLayout(new BoxLayout(home, BoxLayout.Y_AXIS));
@@ -192,7 +198,7 @@ public class HomeJF extends JFrame {
         JScrollPane homeJS = new JScrollPane(home);
         homeJS.setBorder(null);
         homeJS.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        homeJS.setBounds(30, 190, 740, 1190);
+        homeJS.setBounds(20, 240, 760, 1140);
         homeJS.getVerticalScrollBar().setUnitIncrement(20);
         Home.add(homeJS,JLayeredPane.DEFAULT_LAYER);
     }
@@ -200,18 +206,51 @@ public class HomeJF extends JFrame {
     //初始化顶部
     private void iniTop() {
         JPanel topJP = new JPanel();
-        topJP.setBounds(0, 0, 800, 180);
+        topJP.setBounds(0, 0, 800, 230);
         topJP.setBackground(Color.white);
         topJP.setLayout(null);
 
-        title.setFont(new Font("宋体", Font.BOLD, 50));
-        title.setBounds(25, 30, 200, 60);
+        inputBtn.setBorder(null);
+        inputBtn.setFocusable(false);
+        inputBtn.setBackground(Color.white);
+        inputBtn.setFont(new Font("宋体",Font.PLAIN,30));
+        inputBtn.addActionListener(e-> {
+            try {
+                input();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            } catch (ExecutionException ex) {
+                throw new RuntimeException(ex);
+            } catch (InterruptedException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        inputBtn.setBounds(520,10,100,40);
+        topJP.add(inputBtn);
+
+        outputBtn.setBorder(null);
+        outputBtn.setFocusable(false);
+        outputBtn.setBackground(Color.white);
+        outputBtn.setFont(new Font("宋体",Font.PLAIN,30));
+        outputBtn.addActionListener(e-> {
+            try {
+                output();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
+        outputBtn.setBounds(650,10,100,40);
+        topJP.add(outputBtn);
+
+
+        title.setFont(new Font("宋体", Font.PLAIN, 50));
+        title.setBounds(25, 80, 200, 60);
         topJP.add(title);
 
         search = new JTextField("搜索笔记");
 
         search.setFont(new Font("宋体", Font.PLAIN, 32));
-        search.setBounds(27, 110, 720, 50);
+        search.setBounds(27, 160, 720, 50);
         search.setForeground(Color.gray);
         search.setBackground(new Color(200, 200, 200));
         search.setBorder(null);
@@ -292,7 +331,7 @@ public class HomeJF extends JFrame {
         initDetail(null);
         cardL.show(ui,"detail");
     }
-
+    //初始化添加笔记按钮
     private void addNote(Note note){
         note.setTitle(deTitle.getText());
         note.setContent(deConcent.getText());
@@ -305,17 +344,17 @@ public class HomeJF extends JFrame {
         }
         iniData();
     }
-
+//打开详细界面
     private void openDetail(Note note){
         initDetail(note);
         cardL.show(ui,"detail");
     }
-
+//初始化数据
     private void iniData(){
         ArrayList<Note> notes = action.getAllNotes();
         updateData(notes);
     }
-
+//刷新数据
     private void updateData(ArrayList<Note> notes){
         home.removeAll();
         for (Note note : notes) {
@@ -326,7 +365,7 @@ public class HomeJF extends JFrame {
         home.revalidate();
         home.repaint();
     }
-
+//卡片
     private JPanel createCard(Note note) {
         JPanel card = new JPanel();
         card.setBorder(null);
@@ -369,4 +408,55 @@ public class HomeJF extends JFrame {
 
 
     }
+//弹窗
+    private void showMsg(String msg, String title) {
+        JOptionPane.showMessageDialog(this, msg, title, JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void input() throws IOException, ExecutionException, InterruptedException {
+        File file = showChooseFileZip();
+        int err=0;
+        if(file!=null){
+            err=action.input(file);
+            if(err==0){
+                showMsg("导入成功","提示");
+            }else{
+                showMsg("导入失败"+err+"个文件","提示");
+            }
+        }
+    }
+
+    private void output() throws IOException {
+        File file = showChooseFileDir();
+        if(file!=null){
+            action.output(file);
+            showMsg("导出成功","提示");
+        }
+    }
+
+    private File showChooseFileZip(){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setFileFilter(new FileNameExtensionFilter("zip文件", "zip"));
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile();
+        } else {
+            return null;
+        }
+    }
+
+    private File showChooseFileDir(){
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        chooser.setMultiSelectionEnabled(false);
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            return chooser.getSelectedFile();
+        } else {
+            return null;
+        }
+    }
+
 }

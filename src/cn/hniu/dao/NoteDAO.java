@@ -2,9 +2,14 @@ package cn.hniu.dao;
 
 import cn.hniu.entity.Note;
 import cn.hniu.utils.FileUtils;
+import cn.hniu.utils.Input;
+import cn.hniu.utils.Output;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 
 public class NoteDAO {
     public boolean addNote(Note note) throws IOException {
@@ -30,6 +35,16 @@ public class NoteDAO {
             }
         }
         return notesByTitle;
+    }
+
+    public static int input(File get) throws IOException, ExecutionException, InterruptedException {
+        FutureTask<Integer> ft = new FutureTask<>(new Input(get));
+        new Thread(ft).start();
+        return ft.get();
+    }
+
+    public static void output(File get) throws IOException {
+        new Thread(new Output(get)).start();
     }
 
 }
